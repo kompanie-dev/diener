@@ -19,6 +19,7 @@
 	".woff": "font/woff",
 	".woff2": "font/woff2",
 
+	".flac": "audio/flac",
 	".mp3": "audio/mpeg",
 	".ogg": "audio/ogg",
 	".opus": "audio/opus",
