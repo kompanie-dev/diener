@@ -1,6 +1,6 @@
 {
 	"name": "@kompanie/diener",
-	"version": "1.0.3",
+	"version": "1.0.4",
 	"license": "MIT",
 	"description": "A compact development web server with live reload support",
 	"main": "index.js",
