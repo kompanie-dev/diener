@@ -28,20 +28,28 @@ export class DevelopmentServer {
 	}
 
 	#handleRequest(request, response) {
-		let pathname = this.#resolvePathname(request.url);
-		let statusCode = 200;
+		const parsedUrl = new URL(request.url, `http://localhost:${this.#port}`);
+		let pathname = path.join(this.#webServerFolder, decodeURIComponent(parsedUrl.pathname));
+
+		if (!path.extname(pathname) && fs.existsSync(pathname) && fs.statSync(pathname).isDirectory()) {
+			if (!request.url.endsWith("/")) {
+				response.writeHead(302, { Location: `${request.url}/` });
+
+				return response.end();
+			}
+
+			pathname = path.join(pathname, this.#indexFile);
+		}
 
 		if (!fs.existsSync(pathname)) {
-			statusCode = 404;
-			response.writeHead(statusCode, { "Content-Type": "text/plain" });
+			response.writeHead(404, { "Content-Type": "text/plain" });
 
 			return response.end("404 Not Found");
 		}
 
 		fs.readFile(pathname, "utf8", (error, fileContent) => {
 			if (error) {
-				statusCode = 500;
-				response.writeHead(statusCode, { "Content-Type": "text/plain" });
+				response.writeHead(500, { "Content-Type": "text/plain" });
 
 				return response.end("500 Internal Server Error");
 			}
@@ -49,24 +57,13 @@ export class DevelopmentServer {
 			const fileExtension = path.extname(pathname);
 			const mimeType = this.#mimeTypeMap[fileExtension] || "application/octet-stream";
 
-			if (pathname.endsWith(this.#indexFile) &&this.#enableLiveReload === true) {
+			if (pathname.endsWith(this.#indexFile) && this.#enableLiveReload === true) {
 				fileContent += this.#browserLiveReloadClient;
 			}
 
-			response.writeHead(statusCode, { "Content-Type": mimeType });
+			response.writeHead(200, { "Content-Type": mimeType });
 			response.end(fileContent);
 		});
-	}
-
-	#resolvePathname(requestUrl) {
-		const parsedUrl = new URL(requestUrl, `http://localhost:${this.#port}`);
-		let pathname = path.join(this.#webServerFolder, decodeURIComponent(parsedUrl.pathname));
-
-		if (fs.existsSync(pathname) && fs.statSync(pathname).isDirectory()) {
-			pathname = path.join(pathname, this.#indexFile);
-		}
-
-		return pathname;
 	}
 
 	get #browserLiveReloadClient() {
