@@ -2,9 +2,10 @@
 
 import { ArgumentParser } from "./source/argumentParser.js";
 import { ConfigurationValidator } from "./source/configurationValidator.js";
+import { createLoggingTimeStamp } from "./source/createLoggingTimeStamp.js";
 import { DevelopmentServer } from "./source/developmentServer.js";
 
-console.info(`🤵 Diener ${process.env.npm_package_version}`);
+console.info(`🤵 Diener ${process.env.npm_package_version} launched ${createLoggingTimeStamp()}`);
 
 const serverConfiguration = ArgumentParser.parse(process.argv);
 

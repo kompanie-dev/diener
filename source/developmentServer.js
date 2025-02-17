@@ -99,16 +99,12 @@ export class DevelopmentServer {
 		const server = http.createServer((request, response) => this.#handleRequest(request, response));
 
 		server.listen(this.#port, () => {
-			console.info(
-				`${createLoggingTimeStamp()}: 🚀 Server running at http://localhost:${this.#port}/`,
-			);
-			console.info(
-				`${createLoggingTimeStamp()}: 📂 Serving files from: ${this.#webServerFolder}`,
-			);
+			console.info(`🚀 Server running at http://localhost:${this.#port}/`);
+			console.info(`📂 Serving files from: ${this.#webServerFolder}`);
+			console.info(`🔄 Live Reload enabled: ${this.#enableLiveReload}`);
 
 			if (this.#enableLiveReload === true) {
 				const socketServer = new WebSocketServer(server);
-				console.info(`${createLoggingTimeStamp()}: 🔄 Live Reload enabled`);
 
 				fs.watch(this.#webServerFolder, { recursive: true }, () => {
 					console.info(
