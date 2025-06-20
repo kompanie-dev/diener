@@ -17,6 +17,6 @@
 		"diener": "index.js"
 	},
 	"devDependencies": {
-		"eslint": "^9.20.1"
+		"eslint": "^9.29.0"
 	}
 }
