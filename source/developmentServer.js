@@ -118,7 +118,7 @@ export class DevelopmentServer {
 
 				fs.watch(this.#webServerFolder, { recursive: true }, (changeType, filePath) => {
 					if (!filePath ||
-						(this.#ignoreGit === true && filePath.includes(".git"))
+						(this.#ignoreGit === true && filePath.includes(".git")) ||
 						(this.#ignoreNodeModules === true && filePath.includes("node_modules"))
 					) {
 						return;
