@@ -110,7 +110,8 @@ export class DevelopmentServer {
 		server.listen(this.#port, () => {
 			console.info(`🚀 Server running at http://localhost:${this.#port}/`);
 			console.info(`📂 Serving files from: ${this.#webServerFolder}`);
-			console.info(`🔄 Live Reload enabled: ${this.#enableLiveReload}`);
+			console.info(`🔄 Live Reload: ${this.#enableLiveReload} | ⏱️  Debounce delay: ${this.#debounceDelay}ms`);
+			console.info(`👾 Ignore folders: .git: ${this.#ignoreGit}, node_modules: ${this.#ignoreNodeModules}`);
 
 			if (this.#enableLiveReload === true) {
 				const socketServer = new WebSocketServer(server);
