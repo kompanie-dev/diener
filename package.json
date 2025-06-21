@@ -1,6 +1,6 @@
 {
 	"name": "@kompanie/diener",
-	"version": "1.1.0",
+	"version": "1.2.0",
 	"license": "MIT",
 	"description": "A compact development web server with live reload support",
 	"main": "index.js",
@@ -11,7 +11,7 @@
 	],
 	"scripts": {
 		"lint": "eslint .",
-		"start": "npx diener --folder=./testWebApp/ --port=8000 --ignoregit --livereload"
+		"start": "npx diener --folder=./testWebApp/ --port=8000 --ignore-git --livereload"
 	},
 	"bin": {
 		"diener": "index.js"

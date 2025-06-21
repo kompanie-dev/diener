@@ -8,6 +8,7 @@ export class DevelopmentServer {
 	#debounceDelay;
 	#enableLiveReload;
 	#ignoreGit;
+	#ignoreNodeModules;
 	#indexFile;
 	#mimeTypeMap;
 	#port;
@@ -17,6 +18,7 @@ export class DevelopmentServer {
 		debouceDelay,
 		enableLiveReload,
 		ignoreGit,
+		ignoreNodeModules,
 		indexFile,
 		mimeTypeMapFilePath,
 		port,
@@ -25,6 +27,7 @@ export class DevelopmentServer {
 		this.#debounceDelay = debouceDelay;
 		this.#enableLiveReload = enableLiveReload;
 		this.#ignoreGit = ignoreGit;
+		this.#ignoreNodeModules = ignoreNodeModules;
 		this.#indexFile = indexFile;
 		this.#mimeTypeMap = JSON.parse(
 			fs.readFileSync(mimeTypeMapFilePath, "utf8"),
@@ -114,7 +117,10 @@ export class DevelopmentServer {
 				const debounceMap = new Map();
 
 				fs.watch(this.#webServerFolder, { recursive: true }, (changeType, filePath) => {
-					if (!filePath || (this.#ignoreGit === true && filePath.includes(".git"))) {
+					if (!filePath ||
+						(this.#ignoreGit === true && filePath.includes(".git"))
+						(this.#ignoreNodeModules === true && filePath.includes("node_modules"))
+					) {
 						return;
 					}
 

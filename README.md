@@ -29,10 +29,17 @@ Specifies the time in milliseconds the debounce algorithm waits before triggerin
 
 Specifies the folder that should be watched and served. Defaults to the current working directory of node.
 
-### --ignoregit
+### --ignore-git
 
 When this flag is present, the watcher ignores paths and files containing .git.
 This prevents triggering reloads if something inside the git folder is changing.
+Disabled by default.
+
+### --ignore-node-modules
+
+When this flag is present, the watcher ignores paths and files containing node_modules.
+This prevents triggering reloads if something inside the node_modules folder is changing.
+This is useful since there are a lot of changes happening randomly in this directory.
 Disabled by default.
 
 ### --index
