@@ -15,7 +15,7 @@ export class DevelopmentServer {
 	#webServerFolder;
 
 	constructor({
-		debouceDelay,
+		debounceDelay,
 		enableLiveReload,
 		ignoreGit,
 		ignoreNodeModules,
@@ -24,7 +24,7 @@ export class DevelopmentServer {
 		port,
 		webServerFolder,
 	}) {
-		this.#debounceDelay = debouceDelay;
+		this.#debounceDelay = debounceDelay;
 		this.#enableLiveReload = enableLiveReload;
 		this.#ignoreGit = ignoreGit;
 		this.#ignoreNodeModules = ignoreNodeModules;
