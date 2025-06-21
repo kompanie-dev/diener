@@ -35,7 +35,7 @@ When this flag is present, the watcher ignores paths and files containing .git.
 This prevents triggering reloads if something inside the git folder is changing.
 Disabled by default.
 
-### --ignore-node-modules
+### --ignore-nodemodules
 
 When this flag is present, the watcher ignores paths and files containing node_modules.
 This prevents triggering reloads if something inside the node_modules folder is changing.
