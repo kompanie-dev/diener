@@ -21,13 +21,24 @@ npx diener --folder="./web/" --port=8000 --livereload
 The development server supports command line arguments.
 All of them are optional and come with sensible defaults.
 
+### --debouncedelay
+
+Specifies the time in milliseconds the debounce algorithm waits before triggering a browser reload. Defaults to 200.
+
 ### --folder
 
 Specifies the folder that should be watched and served. Defaults to the current working directory of node.
 
+### --ignoregit
+
+When this flag is present, the watcher ignores paths and files containing .git.
+This prevents triggering reloads if something inside the git folder is changing.
+Disabled by default.
+
 ### --index
 
-Specifies the default file which should be served if only a folder is specified as URL. This is also treated as the application entry point, in which the livereload script is injected. Defaults to index.html.
+Specifies the default file which should be served if only a folder is specified as URL.
+This is also treated as the application entry point, in which the livereload script is injected. Defaults to index.html.
 
 ### --livereload
 
@@ -37,12 +48,15 @@ Disabled by default.
 
 ### --mimemap
 
-Specifies the path to a JSON map for mapping file extensions to mimetypes. Defaults and the file structure can be seen in [defaultMimeTypeMap.json](./source/defaultMimeTypeMap.json)
+Specifies the path to a JSON map for mapping file extensions to mimetypes.
+Defaults and the file structure can be seen in [defaultMimeTypeMap.json](./source/defaultMimeTypeMap.json)
 
 ### --port
 
-Specifies the port that should be used to serve the application. Defaults to port 8000.
+Specifies the port that should be used to serve the application.
+Defaults to port 8000.
 
 ## Test project
 
-This repository includes a small test project in `westWebApp`, which can be used to try out stuff while developing. It can be executed via `npm start`.
+This repository includes a small test project in `westWebApp`, which can be used to try out stuff while developing.
+It can be executed via `npm start`.
