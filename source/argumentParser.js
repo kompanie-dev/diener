@@ -15,7 +15,9 @@ export class ArgumentParser {
 		);
 
 		return {
+			debounceDelay: Number.parseInt(args["--debouncedelay"], 10) || 200,
 			enableLiveReload: "--livereload" in args,
+			ignoreGit: args["--ignoregit"] in args,
 			indexFile: args["--index"] || "index.html",
 			mimeTypeMapFilePath: args["--mimemap"] || resolve(currentDirectory, "defaultMimeTypeMap.json"),
 			port: Number.parseInt(args["--port"], 10) || 8000,

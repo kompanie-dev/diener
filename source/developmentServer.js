@@ -5,20 +5,26 @@ import { createLoggingTimeStamp } from "./createLoggingTimeStamp.js";
 import { WebSocketServer } from "./webSocketServer.js";
 
 export class DevelopmentServer {
+	#debounceDelay;
 	#enableLiveReload;
+	#ignoreGit;
 	#indexFile;
 	#mimeTypeMap;
 	#port;
 	#webServerFolder;
 
 	constructor({
+		debouceDelay,
 		enableLiveReload,
+		ignoreGit,
 		indexFile,
 		mimeTypeMapFilePath,
 		port,
 		webServerFolder,
 	}) {
+		this.#debounceDelay = debouceDelay;
 		this.#enableLiveReload = enableLiveReload;
+		this.#ignoreGit = ignoreGit;
 		this.#indexFile = indexFile;
 		this.#mimeTypeMap = JSON.parse(
 			fs.readFileSync(mimeTypeMapFilePath, "utf8"),
@@ -105,13 +111,28 @@ export class DevelopmentServer {
 
 			if (this.#enableLiveReload === true) {
 				const socketServer = new WebSocketServer(server);
+				const debounceMap = new Map();
 
-				fs.watch(this.#webServerFolder, { recursive: true }, () => {
-					console.info(
-						`${createLoggingTimeStamp()}: ♻️  Change detected, reloading browser...`,
-					);
+				fs.watch(this.#webServerFolder, { recursive: true }, (changeType, filePath) => {
+					if (!filePath || (this.#ignoreGit === true && filePath.includes(".git"))) {
+						return;
+					}
 
-					socketServer.sendBroadcast("reload");
+					if (debounceMap.has(filePath)) {
+						clearTimeout(debounceMap.get(filePath));
+					}
+
+					const timer = setTimeout(() => {
+						debounceMap.delete(filePath);
+
+						console.info(
+							`${createLoggingTimeStamp()}: ♻️  Detected ${changeType} in ${filePath}, reloading browser...`,
+						);
+
+						socketServer.sendBroadcast("reload");
+					}, this.#debounceDelay);
+
+					debounceMap.set(filePath, timer);
 				});
 			}
 		});
