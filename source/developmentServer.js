@@ -116,9 +116,11 @@ export class DevelopmentServer {
 			if (this.#enableLiveReload === true) {
 				const socketServer = new WebSocketServer(server);
 				const debounceMap = new Map();
+				let globalReloadTimer = null;
 
 				fs.watch(this.#webServerFolder, { recursive: true }, (changeType, filePath) => {
-					if (!filePath ||
+					if (
+						!filePath ||
 						(this.#ignoreGit === true && filePath.includes(".git")) ||
 						(this.#ignoreNodeModules === true && filePath.includes("node_modules"))
 					) {
@@ -129,17 +131,22 @@ export class DevelopmentServer {
 						clearTimeout(debounceMap.get(filePath));
 					}
 
-					const timer = setTimeout(() => {
+					const fileTimer = setTimeout(() => {
 						debounceMap.delete(filePath);
-
-						console.info(
-							`${createLoggingTimeStamp()}: ♻️  Detected ${changeType} in ${filePath}, reloading browser...`,
-						);
-
-						socketServer.sendBroadcast("reload");
+						console.info(`${createLoggingTimeStamp()}: 📁 Change detected in: ${filePath}`);
 					}, this.#debounceDelay);
 
-					debounceMap.set(filePath, timer);
+					debounceMap.set(filePath, fileTimer);
+
+					if (globalReloadTimer !== null) {
+						clearTimeout(globalReloadTimer);
+					}
+
+					globalReloadTimer = setTimeout(() => {
+						console.info(`${createLoggingTimeStamp()}: ♻️  Triggering browser reload...`);
+						socketServer.sendBroadcast("reload");
+						globalReloadTimer = null;
+					}, this.#debounceDelay);
 				});
 			}
 		});
