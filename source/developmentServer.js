@@ -56,17 +56,28 @@ export class DevelopmentServer {
 			return response.end("404 Not Found");
 		}
 
-		fs.readFile(pathname, "utf8", (error, fileContent) => {
+		const fileExtension = path.extname(pathname);
+		const mimeType = this.#mimeTypeMap[fileExtension] || "application/octet-stream";
+
+		const textMimeTypes = [
+			"text/",
+			"application/javascript",
+			"application/json",
+			"image/svg+xml",
+			"application/xml"
+		];
+
+		const isTextFile = textMimeTypes.some(type => mimeType.startsWith(type));
+		const encoding = isTextFile ? "utf8" : null;
+
+		fs.readFile(pathname, encoding, (error, fileContent) => {
 			if (error) {
 				response.writeHead(500, { "Content-Type": "text/plain" });
 
 				return response.end("500 Internal Server Error");
 			}
 
-			const fileExtension = path.extname(pathname);
-			const mimeType = this.#mimeTypeMap[fileExtension] || "application/octet-stream";
-
-			if (pathname.endsWith(this.#indexFile) && this.#enableLiveReload === true) {
+			if (isTextFile && pathname.endsWith(this.#indexFile) && this.#enableLiveReload === true) {
 				fileContent += this.#browserLiveReloadClient;
 			}
 
@@ -118,7 +129,7 @@ export class DevelopmentServer {
 				const debounceMap = new Map();
 				let globalReloadTimer = null;
 
-				fs.watch(this.#webServerFolder, { recursive: true }, (changeType, filePath) => {
+				fs.watch(this.#webServerFolder, { recursive: true }, (_, filePath) => {
 					if (
 						!filePath ||
 						(this.#ignoreGit === true && filePath.includes(".git")) ||
