@@ -41,7 +41,7 @@ export class DevelopmentServer {
 		this.#port = port;
 		this.#webServerFolder = webServerFolder;
 
-		const browserLiveReloadClientCode = fs.readFileSync(ApplicationPaths.sourceDirectory + "/browserLiveReloadClient.js", { encoding: "utf8", flag: "r" })
+		const browserLiveReloadClientCode = fs.readFileSync(`${ApplicationPaths.sourceDirectory}/browserLiveReloadClient.js`, { encoding: "utf8", flag: "r" });
 		this.#browserLiveReloadClient = browserLiveReloadClientCode.replace("{{PORT}}", port);
 		this.#mimeTypeMapper = new MimeTypeMapper(this.#mimeTypeMap);
 	}
