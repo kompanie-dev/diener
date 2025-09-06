@@ -47,18 +47,16 @@ export class DevelopmentServer {
 
 		if (!path.extname(pathname) && fs.existsSync(pathname) && fs.statSync(pathname).isDirectory()) {
 			if (!request.url.endsWith("/")) {
-				response.writeHead(302, { Location: `${request.url}/` });
-
-				return response.end();
+				this.#sendResponse(response, 302, null, { Location: `${request.url}/` })
+				return;
 			}
 
 			pathname = path.join(pathname, this.#indexFile);
 		}
 
 		if (!fs.existsSync(pathname)) {
-			response.writeHead(404, { "Content-Type": "text/plain" });
-
-			return response.end("404 Not Found");
+			this.#sendResponse(response, 404, "404 Not Found");
+			return;
 		}
 
 		const fileExtension = path.extname(pathname);
@@ -68,9 +66,8 @@ export class DevelopmentServer {
 
 		fs.readFile(pathname, encoding, (error, fileContent) => {
 			if (error) {
-				response.writeHead(500, { "Content-Type": "text/plain" });
-
-				return response.end("500 Internal Server Error");
+				this.#sendResponse(response, 500, "500 Internal Server Error");
+				return;
 			}
 
 			if (isTextFile && pathname.endsWith(this.#indexFile) && this.#enableLiveReload === true) {
@@ -88,6 +85,11 @@ export class DevelopmentServer {
 			(this.#ignoreNodeModules === true && filePath.includes("node_modules")) ||
 			filePath.endsWith(".DS_Store") ||
 			filePath.endsWith(".tmp");
+	}
+
+	#sendResponse(response, status, content, headers = { "Content-Type": "text/plain" }) {
+		response.writeHead(status, headers);
+		response.end(content);
 	}
 
 	#setupLiveReload(server) {
