@@ -58,16 +58,7 @@ export class DevelopmentServer {
 
 		const fileExtension = path.extname(pathname);
 		const mimeType = this.#mimeTypeMap[fileExtension] || "application/octet-stream";
-
-		const textMimeTypes = [
-			"text/",
-			"application/javascript",
-			"application/json",
-			"image/svg+xml",
-			"application/xml"
-		];
-
-		const isTextFile = textMimeTypes.some(type => mimeType.startsWith(type));
+		const isTextFile = this.#isTextFileType(mimeType);
 		const encoding = isTextFile ? "utf8" : null;
 
 		fs.readFile(pathname, encoding, (error, fileContent) => {
@@ -83,6 +74,62 @@ export class DevelopmentServer {
 
 			response.writeHead(200, { "Content-Type": mimeType });
 			response.end(fileContent);
+		});
+	}
+
+	#isIgnoredFileOrFolder(filePath) {
+		return !filePath ||
+			(this.#ignoreGit === true && filePath.includes(".git")) ||
+			(this.#ignoreNodeModules === true && filePath.includes("node_modules")) ||
+			filePath.endsWith(".DS_Store") ||
+			filePath.endsWith(".tmp");
+	}
+
+	#isTextFileType(fileMimeType) {
+		const textMimeTypes = [
+			"text/",
+			"application/javascript",
+			"application/json",
+			"image/svg+xml",
+			"application/xml"
+		];
+
+		return textMimeTypes.some(type => fileMimeType.startsWith(type));
+	}
+
+	#setupLiveReload(server) {
+		const socketServer = new WebSocketServer(server);
+		const fileDebounceTimerMap = new Map();
+		let globalReloadTimer = null;
+
+		fs.watch(this.#webServerFolder, { recursive: true }, (_, filePath) => {
+			if (this.#isIgnoredFileOrFolder(filePath)) {
+				return;
+			}
+
+			if (fileDebounceTimerMap.has(filePath)) {
+				clearTimeout(fileDebounceTimerMap.get(filePath));
+			}
+
+			const fileTimer = setTimeout(() => {
+				fileDebounceTimerMap.delete(filePath);
+
+				console.info(`${createLoggingTimeStamp()}: 📁 Change detected in: ${filePath}`);
+			}, this.#debounceDelay);
+
+			fileDebounceTimerMap.set(filePath, fileTimer);
+
+			if (globalReloadTimer !== null) {
+				clearTimeout(globalReloadTimer);
+			}
+
+			globalReloadTimer = setTimeout(() => {
+				console.info(`${createLoggingTimeStamp()}: ♻️  Triggering browser reload...`);
+
+				socketServer.sendBroadcast("reload");
+
+				globalReloadTimer = null;
+			}, this.#debounceDelay);
 		});
 	}
 
@@ -125,40 +172,7 @@ export class DevelopmentServer {
 			console.info(`👾 Ignore folders: .git: ${this.#ignoreGit}, node_modules: ${this.#ignoreNodeModules}`);
 
 			if (this.#enableLiveReload === true) {
-				const socketServer = new WebSocketServer(server);
-				const debounceMap = new Map();
-				let globalReloadTimer = null;
-
-				fs.watch(this.#webServerFolder, { recursive: true }, (_, filePath) => {
-					if (
-						!filePath ||
-						(this.#ignoreGit === true && filePath.includes(".git")) ||
-						(this.#ignoreNodeModules === true && filePath.includes("node_modules"))
-					) {
-						return;
-					}
-
-					if (debounceMap.has(filePath)) {
-						clearTimeout(debounceMap.get(filePath));
-					}
-
-					const fileTimer = setTimeout(() => {
-						debounceMap.delete(filePath);
-						console.info(`${createLoggingTimeStamp()}: 📁 Change detected in: ${filePath}`);
-					}, this.#debounceDelay);
-
-					debounceMap.set(filePath, fileTimer);
-
-					if (globalReloadTimer !== null) {
-						clearTimeout(globalReloadTimer);
-					}
-
-					globalReloadTimer = setTimeout(() => {
-						console.info(`${createLoggingTimeStamp()}: ♻️  Triggering browser reload...`);
-						socketServer.sendBroadcast("reload");
-						globalReloadTimer = null;
-					}, this.#debounceDelay);
-				});
+				this.#setupLiveReload(server);
 			}
 		});
 	}
