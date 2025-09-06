@@ -19,6 +19,7 @@ export class ArgumentParser {
 			indexFile: args["--index"] || "index.html",
 			mimeTypeMapFilePath: args["--mimemap"] || resolve(ApplicationPaths.sourceDirectory, "defaultMimeTypeMap.json"),
 			port: Number.parseInt(args["--port"], 10) || 8000,
+			verbose: "--verbose" in args,
 			webServerFolder: args["--folder"] || process.cwd(),
 		};
 	}

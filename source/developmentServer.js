@@ -15,6 +15,7 @@ export class DevelopmentServer {
 	#indexFile;
 	#mimeTypeMap;
 	#port;
+	#verbose;
 	#webServerFolder;
 
 	#browserLiveReloadClient;
@@ -28,6 +29,7 @@ export class DevelopmentServer {
 		indexFile,
 		mimeTypeMapFilePath,
 		port,
+		verbose,
 		webServerFolder,
 	}) {
 		this.#debounceDelay = debounceDelay;
@@ -39,6 +41,7 @@ export class DevelopmentServer {
 			fs.readFileSync(mimeTypeMapFilePath, "utf8"),
 		);
 		this.#port = port;
+		this.#verbose = verbose;
 		this.#webServerFolder = webServerFolder;
 
 		const browserLiveReloadClientCode = fs.readFileSync(`${ApplicationPaths.sourceDirectory}/browserLiveReloadClient.js`, { encoding: "utf8", flag: "r" });
@@ -73,13 +76,24 @@ export class DevelopmentServer {
 			let fileContent = await fs.promises.readFile(pathname, encoding);
 
 			if (isTextFile && pathname.endsWith(this.#indexFile) && this.#enableLiveReload === true) {
-				fileContent += /*html*/ `<script>${ this.#browserLiveReloadClient }</script>`;
+				fileContent += /*html*/ `<script>${this.#browserLiveReloadClient}</script>`;
 			}
 
 			this.#sendResponse(response, 200, fileContent, { "Content-Type": mimeType });
 		}
 		catch {
 			this.#sendResponse(response, 404, "404 Not Found");
+		}
+	}
+
+	#log(message) {
+		if (this.#verbose === true) {
+			console.info(`${createLoggingTimeStamp()}: ${message}`);
+		}
+		else {
+			process.stdout.clearLine(0);
+			process.stdout.cursorTo(0);
+			process.stdout.write(`${message} at ${createLoggingTimeStamp()}`);
 		}
 	}
 
@@ -111,7 +125,7 @@ export class DevelopmentServer {
 			const fileTimerID = setTimeout(() => {
 				fileDebounceTimers.delete(filePath);
 
-				console.info(`${createLoggingTimeStamp()}: 📁 Change detected in: ${filePath}`);
+				this.#log(`📁 Change detected in ${filePath}`);
 			}, this.#debounceDelay);
 
 			fileDebounceTimers.set(filePath, fileTimerID);
@@ -119,11 +133,9 @@ export class DevelopmentServer {
 			clearTimeout(reloadTimerID);
 
 			reloadTimerID = setTimeout(() => {
-				console.info(`${createLoggingTimeStamp()}: ♻️  Triggering browser reload...`);
-
 				socketServer.sendBroadcast("reload");
 
-				reloadTimerID = null;
+				this.#log(`♻️  Triggered browser reload`);
 			}, this.#debounceDelay);
 		});
 	}
