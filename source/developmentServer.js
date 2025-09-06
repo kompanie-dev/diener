@@ -63,7 +63,7 @@ export class DevelopmentServer {
 			const pathname = this.#convertUrlToPath(request.url);
 
 			if (!request.url.endsWith("/") && fs.statSync(pathname).isDirectory()) {
-				this.#sendResponse(response, 302, null, { Location: `${request.url}/` });
+				this.#sendResponse(request, response, 302, null, { Location: `${request.url}/` });
 				return;
 			}
 
@@ -79,10 +79,10 @@ export class DevelopmentServer {
 				fileContent += /*html*/ `<script>${this.#browserLiveReloadClient}</script>`;
 			}
 
-			this.#sendResponse(response, 200, fileContent, { "Content-Type": mimeType });
+			this.#sendResponse(request, response, 200, fileContent, { "Content-Type": mimeType });
 		}
 		catch {
-			this.#sendResponse(response, 404, "404 Not Found");
+			this.#sendResponse(request, response, 404, "404 Not Found");
 		}
 	}
 
@@ -105,7 +105,11 @@ export class DevelopmentServer {
 			filePath.endsWith(".tmp");
 	}
 
-	#sendResponse(response, status, content, headers = { "Content-Type": "text/plain" }) {
+	#sendResponse(request, response, status, content, headers = { "Content-Type": "text/plain" }) {
+		if (this.#verbose === true) {
+			this.#log(`➡️  ${request.method} | ${status} | ${request.url}`);
+		}
+
 		response.writeHead(status, headers);
 		response.end(content);
 	}
