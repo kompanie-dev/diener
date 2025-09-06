@@ -1,6 +1,8 @@
 import fs from "fs";
 import http from "http";
 import path from "path";
+
+import { ApplicationPaths } from "./applicationPaths.js";
 import { createLoggingTimeStamp } from "./createLoggingTimeStamp.js";
 import { MimeTypeMapper } from "./mimeTypeMapper.js";
 import { WebSocketServer } from "./webSocketServer.js";
@@ -15,6 +17,7 @@ export class DevelopmentServer {
 	#port;
 	#webServerFolder;
 
+	#browserLiveReloadClient;
 	#mimeTypeMapper;
 
 	constructor({
@@ -38,18 +41,18 @@ export class DevelopmentServer {
 		this.#port = port;
 		this.#webServerFolder = webServerFolder;
 
+		const browserLiveReloadClientCode = fs.readFileSync(ApplicationPaths.sourceDirectory + "/browserLiveReloadClient.js", { encoding: "utf8", flag: "r" })
+		this.#browserLiveReloadClient = browserLiveReloadClientCode.replace("{{PORT}}", port);
 		this.#mimeTypeMapper = new MimeTypeMapper(this.#mimeTypeMap);
 	}
 
 	#convertUrlToPath(requestUrl) {
 		const parsedUrl = new URL(requestUrl, `http://localhost:${this.#port}`);
-		let pathname = path.join(this.#webServerFolder, decodeURIComponent(parsedUrl.pathname));
+		const pathname = path.join(this.#webServerFolder, decodeURIComponent(parsedUrl.pathname));
 
-		if (!path.extname(pathname) && fs.existsSync(pathname) && fs.statSync(pathname).isDirectory()) {
-			return path.join(pathname, this.#indexFile);
-		}
-
-		return pathname;
+		return (!path.extname(pathname) && fs.existsSync(pathname) && fs.statSync(pathname).isDirectory()) ?
+			path.join(pathname, this.#indexFile) :
+			pathname;
 	}
 
 	async #handleRequest(request, response) {
@@ -57,7 +60,8 @@ export class DevelopmentServer {
 			const pathname = this.#convertUrlToPath(request.url);
 
 			if (!request.url.endsWith("/") && fs.statSync(pathname).isDirectory()) {
-				return this.#sendResponse(response, 302, null, { Location: `${request.url}/` });
+				this.#sendResponse(response, 302, null, { Location: `${request.url}/` });
+				return;
 			}
 
 			await fs.promises.access(pathname);
@@ -69,7 +73,7 @@ export class DevelopmentServer {
 			let fileContent = await fs.promises.readFile(pathname, encoding);
 
 			if (isTextFile && pathname.endsWith(this.#indexFile) && this.#enableLiveReload === true) {
-				fileContent += this.#browserLiveReloadClient;
+				fileContent += /*html*/ `<script>${ this.#browserLiveReloadClient }</script>`;
 			}
 
 			this.#sendResponse(response, 200, fileContent, { "Content-Type": mimeType });
@@ -126,35 +130,6 @@ export class DevelopmentServer {
 				globalReloadTimer = null;
 			}, this.#debounceDelay);
 		});
-	}
-
-	get #browserLiveReloadClient() {
-		return /*html*/ `
-			<script>
-				function connectLiveReloadServer() {
-					const socket = new WebSocket("ws://localhost:${this.#port}");
-
-					socket.onclose = () => {
-						console.warn("Can't connect to livereload server. Attempting to reconnect...");
-						setTimeout(connectLiveReloadServer, 3000);
-					};
-
-					socket.onerror = () => {
-						socket.close();
-					};
-
-					socket.onmessage = () => {
-						console.info("🔄 Change detected. Reloading...");
-						location.reload();
-					};
-
-					socket.onopen = () => {
-						console.info("✅ Connected to livereload server");
-					};
-				}
-
-				connectLiveReloadServer();
-			</script>`;
 	}
 
 	start() {
