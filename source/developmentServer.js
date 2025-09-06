@@ -41,42 +41,42 @@ export class DevelopmentServer {
 		this.#mimeTypeMapper = new MimeTypeMapper(this.#mimeTypeMap);
 	}
 
-	#handleRequest(request, response) {
-		const parsedUrl = new URL(request.url, `http://localhost:${this.#port}`);
+	#convertUrlToPath(requestUrl) {
+		const parsedUrl = new URL(requestUrl, `http://localhost:${this.#port}`);
 		let pathname = path.join(this.#webServerFolder, decodeURIComponent(parsedUrl.pathname));
 
 		if (!path.extname(pathname) && fs.existsSync(pathname) && fs.statSync(pathname).isDirectory()) {
-			if (!request.url.endsWith("/")) {
-				this.#sendResponse(response, 302, null, { Location: `${request.url}/` })
-				return;
-			}
-
-			pathname = path.join(pathname, this.#indexFile);
+			return path.join(pathname, this.#indexFile);
 		}
 
-		if (!fs.existsSync(pathname)) {
-			this.#sendResponse(response, 404, "404 Not Found");
-			return;
-		}
+		return pathname;
+	}
 
-		const fileExtension = path.extname(pathname);
-		const mimeType = this.#mimeTypeMapper.getMimeTypeByFileExtension(fileExtension);
-		const isTextFile = this.#mimeTypeMapper.isTextMimeType(mimeType);
-		const encoding = isTextFile ? "utf8" : null;
+	async #handleRequest(request, response) {
+		try {
+			const pathname = this.#convertUrlToPath(request.url);
 
-		fs.readFile(pathname, encoding, (error, fileContent) => {
-			if (error) {
-				this.#sendResponse(response, 500, "500 Internal Server Error");
-				return;
+			if (!request.url.endsWith("/") && fs.statSync(pathname).isDirectory()) {
+				return this.#sendResponse(response, 302, null, { Location: `${request.url}/` });
 			}
+
+			await fs.promises.access(pathname);
+
+			const mimeType = this.#mimeTypeMapper.getMimeTypeByFileExtension(path.extname(pathname));
+			const isTextFile = this.#mimeTypeMapper.isTextMimeType(mimeType);
+			const encoding = isTextFile ? "utf8" : null;
+
+			let fileContent = await fs.promises.readFile(pathname, encoding);
 
 			if (isTextFile && pathname.endsWith(this.#indexFile) && this.#enableLiveReload === true) {
 				fileContent += this.#browserLiveReloadClient;
 			}
 
-			response.writeHead(200, { "Content-Type": mimeType });
-			response.end(fileContent);
-		});
+			this.#sendResponse(response, 200, fileContent, { "Content-Type": mimeType });
+		}
+		catch {
+			this.#sendResponse(response, 404, "404 Not Found");
+		}
 	}
 
 	#isIgnoredFileOrFolder(filePath) {
