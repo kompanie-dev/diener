@@ -2,6 +2,7 @@ import fs from "fs";
 import http from "http";
 import path from "path";
 import { createLoggingTimeStamp } from "./createLoggingTimeStamp.js";
+import { MimeTypeMapper } from "./mimeTypeMapper.js";
 import { WebSocketServer } from "./webSocketServer.js";
 
 export class DevelopmentServer {
@@ -13,6 +14,8 @@ export class DevelopmentServer {
 	#mimeTypeMap;
 	#port;
 	#webServerFolder;
+
+	#mimeTypeMapper;
 
 	constructor({
 		debounceDelay,
@@ -34,6 +37,8 @@ export class DevelopmentServer {
 		);
 		this.#port = port;
 		this.#webServerFolder = webServerFolder;
+
+		this.#mimeTypeMapper = new MimeTypeMapper(this.#mimeTypeMap);
 	}
 
 	#handleRequest(request, response) {
@@ -57,8 +62,8 @@ export class DevelopmentServer {
 		}
 
 		const fileExtension = path.extname(pathname);
-		const mimeType = this.#mimeTypeMap[fileExtension] || "application/octet-stream";
-		const isTextFile = this.#isTextFileType(mimeType);
+		const mimeType = this.#mimeTypeMapper.getMimeTypeByFileExtension(fileExtension);
+		const isTextFile = this.#mimeTypeMapper.isTextMimeType(mimeType);
 		const encoding = isTextFile ? "utf8" : null;
 
 		fs.readFile(pathname, encoding, (error, fileContent) => {
@@ -83,18 +88,6 @@ export class DevelopmentServer {
 			(this.#ignoreNodeModules === true && filePath.includes("node_modules")) ||
 			filePath.endsWith(".DS_Store") ||
 			filePath.endsWith(".tmp");
-	}
-
-	#isTextFileType(fileMimeType) {
-		const textMimeTypes = [
-			"text/",
-			"application/javascript",
-			"application/json",
-			"image/svg+xml",
-			"application/xml"
-		];
-
-		return textMimeTypes.some(type => fileMimeType.startsWith(type));
 	}
 
 	#setupLiveReload(server) {
