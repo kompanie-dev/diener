@@ -98,36 +98,32 @@ export class DevelopmentServer {
 
 	#setupLiveReload(server) {
 		const socketServer = new WebSocketServer(server);
-		const fileDebounceTimerMap = new Map();
-		let globalReloadTimer = null;
+		const fileDebounceTimers = new Map();
+		let reloadTimerID = null;
 
 		fs.watch(this.#webServerFolder, { recursive: true }, (_, filePath) => {
 			if (this.#isIgnoredFileOrFolder(filePath)) {
 				return;
 			}
 
-			if (fileDebounceTimerMap.has(filePath)) {
-				clearTimeout(fileDebounceTimerMap.get(filePath));
-			}
+			clearTimeout(fileDebounceTimers.get(filePath));
 
-			const fileTimer = setTimeout(() => {
-				fileDebounceTimerMap.delete(filePath);
+			const fileTimerID = setTimeout(() => {
+				fileDebounceTimers.delete(filePath);
 
 				console.info(`${createLoggingTimeStamp()}: 📁 Change detected in: ${filePath}`);
 			}, this.#debounceDelay);
 
-			fileDebounceTimerMap.set(filePath, fileTimer);
+			fileDebounceTimers.set(filePath, fileTimerID);
 
-			if (globalReloadTimer !== null) {
-				clearTimeout(globalReloadTimer);
-			}
+			clearTimeout(reloadTimerID);
 
-			globalReloadTimer = setTimeout(() => {
+			reloadTimerID = setTimeout(() => {
 				console.info(`${createLoggingTimeStamp()}: ♻️  Triggering browser reload...`);
 
 				socketServer.sendBroadcast("reload");
 
-				globalReloadTimer = null;
+				reloadTimerID = null;
 			}, this.#debounceDelay);
 		});
 	}
