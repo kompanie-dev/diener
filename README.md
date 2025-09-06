@@ -10,77 +10,33 @@ At first you need to install the package using the following command:
 npm i @kompanie/diener
 ```
 
-You can start the server directly using `npx diener`.
+You can start the server directly without using any command line switches.
 
+```console
+npx diener
+```
+
+If you want to specifiy the folder and port and enable live reload:
 ```console
 npx diener --folder="./web/" --port=8000 --livereload
 ```
 
 ## Command Line Switches
 
-The development server supports command line arguments.
-All of them are optional and come with sensible defaults.
+The development server supports command line arguments.  
+**All of them are optional** and come with sensible defaults.
 
-### --debouncedelay
-
-Specifies the time in milliseconds the debounce algorithm waits before triggering a browser reload.
-
-Default: `200`.
-
-### --folder
-
-Specifies the folder that should be watched and served.
-
-Default: [current working directory of node](https://nodejs.org/api/process.html#processcwd).
-
-### --ignore-git
-
-When this flag is present, the watcher ignores paths and files containing .git.
-This prevents triggering reloads if something inside the git folder is changing.
-
-Default: off
-
-### --ignore-nodemodules
-
-When this flag is present, the watcher ignores paths and files containing node_modules.
-This prevents triggering reloads if something inside the node_modules folder is changing.
-This is useful since there are a lot of changes happening randomly in this directory.
-
-Default: off
-
-### --index
-
-Specifies the default file which should be served if only a folder is specified as URL.
-This is also treated as the application entry point, in which the livereload script is injected.
-
-Default: `index.html`.
-
-### --livereload
-
-When this flag is present, the server injects a script tag into the file specified in `--index` to connect to the Web Socket based live reload server.
-Everytime a file changes, the browser refreshes.
-`.DS_Store` and `.tmp` files will never trigger reloads.
-
-Default: off
-
-### --mimemap
-
-Specifies the path to a JSON map for mapping file extensions to mimetypes.
-
-Default: [defaultMimeTypeMap.json](./source/defaultMimeTypeMap.json)
-
-### --port
-
-Specifies the port that should be used to serve the application.
-
-Default: `8000`.
-
-### --verbose
-
-Enables verbose logging for the live reload server.
-The server will then log individually in which file or folder a change was detected and when the browser reload was triggered.
-
-Default: off
+| Switch                 | Description                                                                                                                                     | Default |
+|------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|---------|
+| `--debouncedelay`      | Time in milliseconds the debounce algorithm waits before triggering a browser reload.                                                           | `200` |
+| `--folder`             | Folder that should be watched and served.                                                                                                       | [current working directory of node](https://nodejs.org/api/process.html#processcwd) |
+| `--ignore-git`         | Ignores paths and files containing `.git` to prevent reloads from changes inside the `.git` folder.                                             | off |
+| `--ignore-nodemodules` | Ignores paths and files containing `node_modules` to prevent reloads from changes inside the `node_modules` folder.                             | off |
+| `--index`              | Default file served if only a folder is specified in the URL. Treated as the application entry point, where the livereload script is injected.  | `index.html` |
+| `--livereload`         | Reload the browser on file changes inside `--folder`. `.DS_Store` and `.tmp` files will never trigger reloads.                                  | off |
+| `--mimemap`            | Path to a JSON map for mapping file extensions to MIME types.                                                                                   | [defaultMimeTypeMap.json](./source/defaultMimeTypeMap.json) |
+| `--port`               | The port which should be used for the web server and live reload websocket server.                                                              | `8000` |
+| `--verbose`            | Enables verbose logging for the live reload server, logging file/folder changes and reload triggers individually.                               | off |
 
 ## Test project
 
