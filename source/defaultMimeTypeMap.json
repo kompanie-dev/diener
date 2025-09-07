@@ -7,9 +7,9 @@
 	".xml": "application/xml",
 
 	".avif": "image/avif",
-	".ico": "image/x-icon",
 	".gif": "image/gif",
 	".heic": "image/heic",
+	".ico": "image/x-icon",
 	".jpg": "image/jpeg",
 	".jpeg": "image/jpeg",
 	".png": "image/png",

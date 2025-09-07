@@ -114,8 +114,8 @@ export class DevelopmentServer {
 		response.end(content);
 	}
 
-	#setupLiveReload(server) {
-		const socketServer = new WebSocketServer(server);
+	#setupLiveReload(httpServer) {
+		const socketServer = new WebSocketServer(httpServer);
 		const fileDebounceTimers = new Map();
 		let reloadTimerID = null;
 
@@ -145,16 +145,16 @@ export class DevelopmentServer {
 	}
 
 	start() {
-		const server = http.createServer((request, response) => this.#handleRequest(request, response));
+		const httpServer = http.createServer((request, response) => this.#handleRequest(request, response));
 
-		server.listen(this.#port, () => {
+		httpServer.listen(this.#port, () => {
 			console.info(`🚀 Server running at http://localhost:${this.#port}/`);
 			console.info(`📂 Serving files from: ${this.#webServerFolder}`);
 			console.info(`🔄 Live Reload: ${this.#enableLiveReload} | ⏱️  Debounce delay: ${this.#debounceDelay}ms`);
 			console.info(`👾 Ignore folders: .git: ${this.#ignoreGit}, node_modules: ${this.#ignoreNodeModules}`);
 
 			if (this.#enableLiveReload === true) {
-				this.#setupLiveReload(server);
+				this.#setupLiveReload(httpServer);
 			}
 		});
 	}
