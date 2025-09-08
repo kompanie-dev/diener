@@ -4,7 +4,6 @@ import path from "path";
 
 import { ApplicationPaths } from "./applicationPaths.js";
 import { createLoggingTimeStamp } from "./createLoggingTimeStamp.js";
-import { MimeTypeMapper } from "./mimeTypeMapper.js";
 import { WebSocketServer } from "./webSocketServer.js";
 
 export class DevelopmentServer {
@@ -19,7 +18,6 @@ export class DevelopmentServer {
 	#webServerFolder;
 
 	#browserLiveReloadClient;
-	#mimeTypeMapper;
 
 	constructor({
 		debounceDelay,
@@ -46,7 +44,6 @@ export class DevelopmentServer {
 
 		const browserLiveReloadClientCode = fs.readFileSync(`${ApplicationPaths.sourceDirectory}/browserLiveReloadClient.js`, { encoding: "utf8", flag: "r" });
 		this.#browserLiveReloadClient = browserLiveReloadClientCode.replace("{{PORT}}", port);
-		this.#mimeTypeMapper = new MimeTypeMapper(this.#mimeTypeMap);
 	}
 
 	#convertUrlToPath(requestUrl) {
@@ -64,21 +61,20 @@ export class DevelopmentServer {
 
 			if (!request.url.endsWith("/") && fs.statSync(pathname).isDirectory()) {
 				this.#sendResponse(request, response, 302, null, { Location: `${request.url}/` });
+
 				return;
 			}
+			
+			let fileContent = await fs.promises.readFile(pathname);
 
-			await fs.promises.access(pathname);
+			if (this.#enableLiveReload === true && pathname.endsWith(this.#indexFile)) {
+				const textContent = fileContent.toString("utf8") + `<script>${this.#browserLiveReloadClient}</script>`;
 
-			const mimeType = this.#mimeTypeMapper.getMimeTypeByFileExtension(path.extname(pathname));
-			const isTextFile = this.#mimeTypeMapper.isTextMimeType(mimeType);
-			const encoding = isTextFile ? "utf8" : null;
-
-			let fileContent = await fs.promises.readFile(pathname, encoding);
-
-			if (isTextFile && pathname.endsWith(this.#indexFile) && this.#enableLiveReload === true) {
-				fileContent += /*html*/ `<script>${this.#browserLiveReloadClient}</script>`;
+				fileContent = Buffer.from(textContent, "utf8");
 			}
 
+			const mimeType = this.#mimeTypeMap[path.extname(pathname)] || "application/octet-stream";
+			
 			this.#sendResponse(request, response, 200, fileContent, { "Content-Type": mimeType });
 		}
 		catch {
