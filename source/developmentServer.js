@@ -46,25 +46,21 @@ export class DevelopmentServer {
 		this.#browserLiveReloadClient = browserLiveReloadClientCode.replace("{{PORT}}", port);
 	}
 
-	#convertUrlToPath(requestUrl) {
-		const parsedUrl = new URL(requestUrl, `http://localhost:${this.#port}`);
-		const pathname = path.join(this.#webServerFolder, decodeURIComponent(parsedUrl.pathname));
-
-		return (!path.extname(pathname) && fs.existsSync(pathname) && fs.statSync(pathname).isDirectory()) ?
-			path.join(pathname, this.#indexFile) :
-			pathname;
-	}
-
 	async #handleRequest(request, response) {
 		try {
-			const pathname = this.#convertUrlToPath(request.url);
+			const parsedUrl = new URL(request.url, `http://localhost:${this.#port}`);
+			let pathname = path.join(this.#webServerFolder, decodeURIComponent(parsedUrl.pathname));
 
-			if (!request.url.endsWith("/") && fs.statSync(pathname).isDirectory()) {
-				this.#sendResponse(request, response, 302, null, { Location: `${request.url}/` });
+			if (fs.statSync(pathname).isDirectory() === true) {
+				if (request.url.endsWith("/") === false) {
+					this.#sendResponse(request, response, 302, null, { Location: `${request.url}/` });
 
-				return;
+					return;
+				}
+
+				pathname = path.join(pathname, this.#indexFile);
 			}
-			
+
 			let fileContent = await fs.promises.readFile(pathname);
 
 			if (this.#enableLiveReload === true && pathname.endsWith(this.#indexFile)) {
@@ -74,7 +70,7 @@ export class DevelopmentServer {
 			}
 
 			const mimeType = this.#mimeTypeMap[path.extname(pathname)] || "application/octet-stream";
-			
+
 			this.#sendResponse(request, response, 200, fileContent, { "Content-Type": mimeType });
 		}
 		catch {
